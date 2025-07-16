@@ -1,67 +1,44 @@
-import { REST, Routes } from 'discord.js';
-
-const commands = [
-  {
-    name: 'hello',
-    description: 'Приветствие',
-    type: 1
-  }
-];
-
-async function registerCommands() {
-  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);
-  try {
-    console.log('Регистрируем команды...');
-    await rest.put(
-      Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
-      { body: commands }
-    );
-    console.log('Команды успешно зарегистрированы');
-  } catch (error) {
-    console.error('Ошибка при регистрации команд:', error);
-  }
-}
-
-registerCommands(); // Вызываем при запуске
-
-
 import express from 'express';
-import { InteractionType, verifyKeyMiddleware } from 'discord-interactions';
+import { verifyKeyMiddleware } from 'discord-interactions';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-app.use(express.json({
-  verify: verifyKeyMiddleware(process.env.DISCORD_PUBLIC_KEY)
-}));
+// ✅ ВАЖНО: middleware ТОЛЬКО для /interactions
+app.post(
+  '/interactions',
+  verifyKeyMiddleware(process.env.DISCORD_PUBLIC_KEY),
+  (req, res) => {
+    const interaction = req.body;
 
-app.post('/interactions', (req, res) => {
-  const interaction = req.body;
+    // Примеры обработки
+    if (interaction.type === 1) {
+      return res.send({ type: 1 }); // Pong
+    }
 
-  if (interaction.type === InteractionType.PING) {
-    return res.send({ type: 1 });
-  }
-
-  if (interaction.type === InteractionType.APPLICATION_COMMAND) {
-    if (interaction.data.name === 'hello') {
+    if (interaction.type === 2 && interaction.data.name === 'hello') {
       return res.send({
         type: 4,
         data: {
-          content: `Привет, ${interaction.member.user.username}!`
+          content: 'Привет!'
         }
       });
     }
-  }
 
-  res.status(400).send('Unhandled interaction');
-});
+    res.status(400).send('Unhandled interaction type');
+  }
+);
+
+// ✅ НЕ подключаем express.json() вообще или делаем это после
+// app.use(express.json()); ← ⚠️ Удалить или перенести в другой endpoint
 
 app.get('/', (req, res) => {
-  res.send('Бот работает!');
+  res.send('Бот живой!');
 });
 
 app.listen(PORT, () => {
-  console.log(`Сервер запущен на порту ${PORT}`);
+  console.log(`Сервер запущен на http://localhost:${PORT}`);
 });
