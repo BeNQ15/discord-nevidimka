@@ -1,108 +1,95 @@
-import express from "express";
-import { verifyKeyMiddleware } from "discord-interactions";
-import dotenv from "dotenv";
+import express from 'express';
+import { verifyKeyMiddleware } from 'discord-interactions';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
+
+app.use(express.json());
 
 app.post(
-  "/interactions",
+  '/interactions',
   verifyKeyMiddleware(process.env.DISCORD_PUBLIC_KEY),
-  async (req, res) => {
+  (req, res) => {
     const interaction = req.body;
 
-    // PING
+    // PING от Discord
     if (interaction.type === 1) {
-      return res.send({ type: 1 }); // PONG
+      return res.send({ type: 1 });
     }
 
-    // SLASH command
+    // SLASH-команды
     if (interaction.type === 2) {
       const { name, options } = interaction.data;
 
-      // /chat
-      if (name === "chat") {
-        const message = options.find(o => o.name === "message")?.value;
+      if (name === 'chat') {
+        const message = options.find(opt => opt.name === 'message')?.value;
         return res.send({
           type: 4,
           data: {
-            content: `🗨️ Вы сказали: "${message}"`
+            content: `💬 Вы сказали: ${message}`
           }
         });
       }
 
-      // /rules
-      if (name === "rules") {
+      if (name === 'rules') {
         return res.send({
           type: 4,
           data: {
-            content: "**📜 Правила сервера:**\n1. Будь вежлив\n2. Не спамь\n3. Соблюдай Discord ToS"
+            content: `📜 **Правила сервера:**\n1. Не нарушай ToS\n2. Не спамь\n3. Будь вежлив`
           }
         });
       }
 
-      // /help
-      if (name === "help") {
+      if (name === 'help') {
         return res.send({
           type: 4,
           data: {
-            content:
-              "**🛠️ Доступные команды:**\n" +
-              "`/chat <сообщение>` — симулированный чат\n" +
-              "`/rules` — правила\n" +
-              "`/ticket <тема>` — создать тикет\n" +
-              "`/game <действие>` — текстовая игра\n" +
-              "`/help` — эта справка"
+            content: `🛠 **Справка:**\n• /chat <сообщение>\n• /rules\n• /help\n• /ticket <тема>\n• /game <действие>`
           }
         });
       }
 
-      // /ticket
-      if (name === "ticket") {
-        const тема = options.find(o => o.name === "тема")?.value;
+      if (name === 'ticket') {
+        const тема = options.find(opt => opt.name === 'тема')?.value;
         return res.send({
           type: 4,
           data: {
-            content: `🎫 Тикет создан!\nТема: **${тема}**\nМодератор свяжется с вами.`
+            content: `🎫 Тикет создан: **${тема}**\nОжидайте ответа модерации.`
           }
         });
       }
 
-      // /game
-      if (name === "game") {
-        const действие = options.find(o => o.name === "действие")?.value.toLowerCase();
+      if (name === 'game') {
+        const действие = options.find(opt => opt.name === 'действие')?.value.toLowerCase();
+        let reply = '🤷 Неизвестное действие.';
 
-        let response = "🤷 Неизвестное действие.";
-        if (действие.includes("идти")) {
-          response = "🚶 Вы идёте по тёмному лесу...";
-        } else if (действие.includes("осмотреться")) {
-          response = "👀 Вы осмотрелись и заметили сундук.";
-        } else if (действие.includes("взять")) {
-          response = "📦 Вы взяли предмет!";
-        }
+        if (действие.includes('идти')) reply = '🚶 Вы идёте вперёд по тропе.';
+        else if (действие.includes('осмотреться')) reply = '🔍 Вы осмотрелись вокруг.';
+        else if (действие.includes('взять')) reply = '🎒 Вы подобрали предмет.';
 
         return res.send({
           type: 4,
-          data: { content: response }
+          data: { content: reply }
         });
       }
 
-      // Если не распознано
+      // Если команда не найдена
       return res.send({
         type: 4,
-        data: { content: "❌ Неизвестная команда" }
+        data: { content: '❌ Неизвестная команда' }
       });
     }
   }
 );
 
-// тестовая страница
-app.get("/", (req, res) => {
-  res.send("👋 Бот живой!");
+// Тестовый GET
+app.get('/', (_, res) => {
+  res.send('✅ Бот работает!');
 });
 
 app.listen(PORT, () => {
-  console.log(`Сервер запущен на http://localhost:${PORT}`);
+  console.log(`⚡ Сервер запущен на порту ${PORT}`);
 });
