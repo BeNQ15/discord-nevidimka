@@ -1,3 +1,5 @@
+// mega_slash_bot/index.js — улучшенная обработка интеракций с /ticket и /minecraft
+
 import express from 'express';
 import { verifyKeyMiddleware } from 'discord-interactions';
 import dotenv from 'dotenv';
@@ -9,87 +11,87 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.post(
-  '/interactions',
-  verifyKeyMiddleware(process.env.DISCORD_PUBLIC_KEY),
-  (req, res) => {
-    const interaction = req.body;
+const ticketChannels = new Map();
+const minecraftProgress = new Map();
 
-    // PING от Discord
-    if (interaction.type === 1) {
-      return res.send({ type: 1 });
+app.post('/interactions', verifyKeyMiddleware(process.env.DISCORD_PUBLIC_KEY), async (req, res) => {
+  const interaction = req.body;
+  if (interaction.type === 1) return res.send({ type: 1 });
+  if (interaction.type !== 2) return res.send({ type: 4, data: { content: '❌ Неизвестный тип взаимодействия' } });
+
+  const name = interaction.data.name;
+  const options = interaction.data.options || [];
+  const getOption = (key) => options.find(opt => opt.name === key)?.value;
+  const reply = (content) => res.send({ type: 4, data: { content } });
+
+  switch (name) {
+    case 'ticket': {
+      const topic = getOption('тема') || 'Тикет';
+      const channelName = `ticket-${interaction.member.user.username}`.toLowerCase();
+      // имитация — в реальности тебе нужно Discord API POST к /channels
+      ticketChannels.set(channelName, { topic, user: interaction.member.user.id });
+      return reply(`🎫 Приватный канал создан: **#${channelName}**\n(фиктивно, но можно настроить через Webhook/API)`);
     }
 
-    // SLASH-команды
-    if (interaction.type === 2) {
-      const { name, options } = interaction.data;
+    case 'minecraft': {
+      const action = getOption('действие');
+      const userId = interaction.member.user.id;
+      const state = minecraftProgress.get(userId) || [];
+      const nextStep = [
+        'исследовать мир',
+        'копать',
+        'добыть еду',
+        'найти ведро лавы',
+        'найти ведро воды',
+        'соединить лаву и воду',
+        'отправиться в ад',
+        'уничтожить блейзов',
+        'скрафтить око эндера',
+        'вернуться в обычный мир',
+        'найти с око портал',
+        'активировать его',
+        'уничтожить кристаллы энда',
+        'победа дракона',
+        'получение опыта'
+      ];
 
-      if (name === 'chat') {
-        const message = options.find(opt => opt.name === 'message')?.value;
-        return res.send({
-          type: 4,
-          data: {
-            content: `💬 Вы сказали: ${message}`
-          }
-        });
+      const currentStep = state.length;
+      if (action === nextStep[currentStep]) {
+        state.push(action);
+        minecraftProgress.set(userId, state);
+        if (state.length === nextStep.length) {
+          return reply('🏆 Поздравляем! Вы победили дракона и прошли игру Minecraft!');
+        } else {
+          return reply(`✅ Шаг выполнен: **${action}**. Следующий шаг: **${nextStep[currentStep + 1]}**`);
+        }
+      } else {
+        return reply(`⚠️ Сейчас нужно выполнить шаг: **${nextStep[currentStep]}**`);
       }
-
-      if (name === 'rules') {
-        return res.send({
-          type: 4,
-          data: {
-            content: `📜 **Правила сервера:**\n1. Не нарушай ToS\n2. Не спамь\n3. Будь вежлив`
-          }
-        });
-      }
-
-      if (name === 'help') {
-        return res.send({
-          type: 4,
-          data: {
-            content: `🛠 **Справка:**\n• /chat <сообщение>\n• /rules\n• /help\n• /ticket <тема>\n• /game <действие>`
-          }
-        });
-      }
-
-      if (name === 'ticket') {
-        const тема = options.find(opt => opt.name === 'тема')?.value;
-        return res.send({
-          type: 4,
-          data: {
-            content: `🎫 Тикет создан: **${тема}**\nОжидайте ответа модерации.`
-          }
-        });
-      }
-
-      if (name === 'game') {
-        const действие = options.find(opt => opt.name === 'действие')?.value.toLowerCase();
-        let reply = '🤷 Неизвестное действие.';
-
-        if (действие.includes('идти')) reply = '🚶 Вы идёте вперёд по тропе.';
-        else if (действие.includes('осмотреться')) reply = '🔍 Вы осмотрелись вокруг.';
-        else if (действие.includes('взять')) reply = '🎒 Вы подобрали предмет.';
-
-        return res.send({
-          type: 4,
-          data: { content: reply }
-        });
-      }
-
-      // Если команда не найдена
-      return res.send({
-        type: 4,
-        data: { content: '❌ Неизвестная команда' }
-      });
     }
+
+    case '8ball': {
+      const answers = [
+        '🎱 Да',
+        '🎱 Нет',
+        '🎱 Возможно',
+        '🎱 Определённо да',
+        '🎱 Определённо нет',
+        '🎱 Спроси позже',
+        '🎱 Без сомнений',
+        '🎱 Лучше не знать ответа 😅'
+      ];
+      return reply(answers[Math.floor(Math.random() * answers.length)]);
+    }
+
+    default:
+      return reply('❌ Неизвестная команда');
   }
-);
+});
 
-// Тестовый GET
 app.get('/', (_, res) => {
-  res.send('✅ Бот работает!');
+  res.send('✅ Бот работает. Пинг живой.');
 });
 
 app.listen(PORT, () => {
-  console.log(`⚡ Сервер запущен на порту ${PORT}`);
+  console.log(`🚀 Сервер запущен на http://localhost:${PORT}`);
 });
