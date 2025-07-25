@@ -1,5 +1,3 @@
-// register.js — обновлённый список слэш-команд для Discord REST API
-
 import { REST, Routes } from 'discord.js';
 import dotenv from 'dotenv';
 
@@ -17,6 +15,14 @@ const commands = [
         required: true
       }
     ]
+  },
+  {
+    name: 'rules',
+    description: '📜 Показать случайное правило сервера'
+  },
+  {
+    name: 'help',
+    description: '🆘 Показать весёлую справку по командам'
   },
   {
     name: 'ticket',
@@ -70,7 +76,6 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN)
 (async () => {
   try {
     console.log('⏳ Регистрируем слэш-команды...');
-
     await rest.put(
       Routes.applicationGuildCommands(
         process.env.DISCORD_CLIENT_ID,
@@ -78,7 +83,6 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN)
       ),
       { body: commands }
     );
-
     console.log('✅ Команды успешно зарегистрированы');
   } catch (error) {
     console.error('❌ Ошибка при регистрации:', error);
