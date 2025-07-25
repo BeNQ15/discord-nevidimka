@@ -1,41 +1,11 @@
+// register.js — очищен, остались только полезные команды: /minecraft и /8ball
+
 import { REST, Routes } from 'discord.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const commands = [
-  {
-    name: 'chat',
-    description: '💬 Отправить сообщение в чат',
-    options: [
-      {
-        type: 3,
-        name: 'message',
-        description: 'Сообщение для отправки',
-        required: true
-      }
-    ]
-  },
-  {
-    name: 'rules',
-    description: '📜 Показать случайное правило сервера'
-  },
-  {
-    name: 'help',
-    description: '🆘 Показать весёлую справку по командам'
-  },
-  {
-    name: 'ticket',
-    description: '🎫 Создать тикет для поддержки',
-    options: [
-      {
-        type: 3,
-        name: 'тема',
-        description: 'Опишите проблему',
-        required: true
-      }
-    ]
-  },
   {
     name: 'minecraft',
     description: '🧱 Играть в текстовый Minecraft',
