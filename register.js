@@ -1,58 +1,73 @@
-import { REST, Routes } from 'discord.js';
+import fetch from 'node-fetch';
 import dotenv from 'dotenv';
-
 dotenv.config();
+
+const { DISCORD_BOT_TOKEN, CLIENT_ID, GUILD_ID } = process.env;
+
+const headers = {
+  "Authorization": `Bot ${DISCORD_BOT_TOKEN}`,
+  "Content-Type": "application/json"
+};
 
 const commands = [
   {
     name: 'minecraft',
-    description: '🧱 Играть в текстовый Minecraft',
+    description: 'Пошаговое прохождение Minecraft',
+    type: 1,
     options: [
       {
-        type: 3,
         name: 'действие',
-        description: 'Выберите действие',
-        required: true,
-        choices: [
-          { name: 'исследовать мир', value: 'исследовать мир' },
-          { name: 'копать', value: 'копать' },
-          { name: 'добыть еду', value: 'добыть еду' },
-          { name: 'найти ведро лавы', value: 'найти ведро лавы' },
-          { name: 'найти ведро воды', value: 'найти ведро воды' },
-          { name: 'соединить лаву и воду', value: 'соединить лаву и воду' },
-          { name: 'отправиться в ад', value: 'отправиться в ад' },
-          { name: 'уничтожить блейзов', value: 'уничтожить блейзов' },
-          { name: 'скрафтить око эндера', value: 'скрафтить око эндера' },
-          { name: 'вернуться в обычный мир', value: 'вернуться в обычный мир' },
-          { name: 'найти с око портал', value: 'найти с око портал' },
-          { name: 'активировать его', value: 'активировать его' },
-          { name: 'уничтожить кристаллы энда', value: 'уничтожить кристаллы энда' },
-          { name: 'победа дракона', value: 'победа дракона' },
-          { name: 'получение опыта', value: 'получение опыта' }
-        ]
+        description: 'Следующий шаг',
+        type: 3,
+        required: true
       }
     ]
   },
   {
     name: '8ball',
-    description: '🎱 Получить ответ от магического шара'
+    description: 'Магический шар предскажет ответ',
+    type: 1,
+    options: [
+      {
+        name: 'text',
+        description: 'Ваш вопрос',
+        type: 3,
+        required: true
+      }
+    ]
+  },
+  {
+    name: 'tea',
+    description: 'Заварите собственный чай',
+    type: 1,
+    options: [
+      { name: 'ингредиент1', type: 3, description: 'Первый ингредиент', required: true },
+      { name: 'ингредиент2', type: 3, description: 'Второй ингредиент', required: false }
+    ]
+  },
+  {
+    name: 'namefusion',
+    description: 'Слияние двух имён',
+    type: 1,
+    options: [
+      { name: 'name1', type: 3, description: 'Первое имя', required: true },
+      { name: 'name2', type: 3, description: 'Второе имя', required: true }
+    ]
+  },
+  {
+    name: 'treegrow',
+    description: 'Полей дерево и смотри, как оно растёт',
+    type: 1
   }
 ];
 
-const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);
+const url = `https://discord.com/api/v10/applications/${CLIENT_ID}/guilds/${GUILD_ID}/commands`;
 
-(async () => {
-  try {
-    console.log('⏳ Регистрируем слэш-команды...');
-    await rest.put(
-      Routes.applicationGuildCommands(
-        process.env.DISCORD_CLIENT_ID,
-        process.env.DISCORD_GUILD_ID
-      ),
-      { body: commands }
-    );
-    console.log('✅ Команды успешно зарегистрированы');
-  } catch (error) {
-    console.error('❌ Ошибка при регистрации:', error);
-  }
-})();
+fetch(url, {
+  method: 'PUT',
+  headers,
+  body: JSON.stringify(commands)
+})
+.then(res => res.json())
+.then(json => console.log('✅ Зарегистрированы команды:', json))
+.catch(console.error);
