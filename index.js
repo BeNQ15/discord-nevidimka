@@ -7,16 +7,20 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+// ❌ Убираем express.json() глобально, иначе слэш-команды не заработают
 
 const minecraftProgress = new Map();
 const treeGrowStage = new Map();
 
-app.post('/interactions', verifyKeyMiddleware(process.env.DISCORD_PUBLIC_KEY), async (req, res) => {
-  const interaction = req.body;
+// ✅ Raw body verification middleware ДОЛЖЕН быть первым для /interactions
+app.post('/interactions', express.raw({ type: '*/*' }), verifyKeyMiddleware(process.env.DISCORD_PUBLIC_KEY), async (req, res) => {
+  const interaction = JSON.parse(req.body.toString());
 
-  if (interaction.type === 1) return res.send({ type: 1 });
-  if (interaction.type !== 2) return res.send({ type: 4, data: { content: '❌ Неизвестный тип взаимодействия' } });
+  if (interaction.type === 1)
+    return res.send({ type: 1 });
+
+  if (interaction.type !== 2)
+    return res.send({ type: 4, data: { content: '❌ Неизвестный тип взаимодействия' } });
 
   const name = interaction.data.name;
   const options = interaction.data.options || [];
@@ -73,6 +77,8 @@ app.post('/interactions', verifyKeyMiddleware(process.env.DISCORD_PUBLIC_KEY), a
   return reply('❌ Неизвестная команда');
 });
 
-app.get('/', (_, res) => res.send('✅ Бот работает.')); 
+// ✅ теперь JSON-парсер можно использовать только для других API
+app.use('/api', express.json());
+app.get('/', (_, res) => res.send('✅ Бот работает.'));
 
 app.listen(PORT, () => console.log(`🚀 Сервер запущен на http://localhost:${PORT}`));
