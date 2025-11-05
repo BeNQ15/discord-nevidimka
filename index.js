@@ -25,4 +25,4 @@ app.post("/interactions", verifyKeyMiddleware(PUBLIC_KEY), (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log("Interactions server running!"));
+app.listen(4000, () => console.log("Interactions server running!"));
