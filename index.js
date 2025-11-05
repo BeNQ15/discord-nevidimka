@@ -6,6 +6,7 @@ import {
 } from "discord-interactions";
 
 const app = express();
+const port = process.env.PORT || 10000 
 
 const PUBLIC_KEY = process.env.PUBLIC_KEY;
 
