@@ -1,29 +1,35 @@
 import express from "express";
-import {
-  InteractionType,
-  InteractionResponseType,
-  verifyKeyMiddleware
-} from "discord-interactions";
+import { verifyKeyMiddleware } from "discord-interactions";
 
 const app = express();
-const port = process.env.PORT || 4000 
+const PORT = process.env.PORT || 3000;
 
-const PUBLIC_KEY = process.env.PUBLIC_KEY;
+app.post(
+  "/interactions",
+  verifyKeyMiddleware(process.env.PUBLIC_KEY),
+  async (req, res) => {
+    const interaction = req.body;
 
-app.post("/interactions", verifyKeyMiddleware(PUBLIC_KEY), (req, res) => {
-  const interaction = req.body;
+    // Ping от Discord при проверке
+    if (interaction.type === 1) {
+      return res.send({ type: 1 });
+    }
 
-  if (interaction.type === InteractionType.PING) {
-    return res.send({ type: InteractionResponseType.PONG });
+    // Slash-команда /ping
+    if (
+      interaction.type === 2 &&
+      interaction.data.name === "ping"
+    ) {
+      const latency = Date.now() - Date.parse(interaction.id / 4194304 + 1420070400000);
+
+      return res.send({
+        type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+        data: {
+          content: `🏓 Pong! Latency: **${latency} ms**`
+        }
+      });
+    }
   }
+);
 
-  if (interaction.type === InteractionType.APPLICATION_COMMAND) {
-    const name = interaction.data.name;
-    return res.send({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: { content: `Команда: ${name} выполнена ✅` }
-    });
-  }
-});
-
-app.listen(4000, () => console.log("Interactions server running!"));
+app.listen(PORT, () => console.log("Started on " + PORT));
