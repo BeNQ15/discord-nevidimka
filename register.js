@@ -33,9 +33,18 @@ const commands = [
       }
     ]
   },
+
   {
-    name: '8ball',
-    description: '🎱 Получить ответ от магического шара'
+    name: "8ball",
+    description: "🎱 Получить ответ от магического шара",
+    options: [
+      {
+        type: 3,
+        name: "text",
+        description: "Ваш вопрос",
+        required: true
+      }
+    ]
   }
 ];
 
@@ -53,6 +62,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
     );
     console.log('✅ Команды успешно зарегистрированы');
   } catch (error) {
-    console.error('❌ Ошибка при регистрации:', error);
+    console.error('❌ Ошибка при регистрации:\n', error.rawError ?? error);
   }
 })();
+
